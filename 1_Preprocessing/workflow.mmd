@@ -1,0 +1,42 @@
+---
+config:
+  layout: fixed
+---
+flowchart TD
+ subgraph subGraph0["Data Cleaning & Filtering"]
+        B1["Read Raw CSVs"]
+        B2["Clean Whitespace"]
+        B3["Filter by Valid Products"]
+        B4["Visualize Results"]
+  end
+ subgraph subGraph1["Data Standardization"]
+        C1["Select Essential Columns"]
+        C2["Handle Null Values"]
+        C3["Convert Data Types"]
+        C4["Standardize Number Formats"]
+  end
+ subgraph subGraph2["Data Aggregation"]
+        D1["Group by Account & Deal"]
+        D2["Calculate Transaction Totals"]
+        D3["Add Deal Count per Account"]
+        D4["Rename for Clarity"]
+  end
+ subgraph subGraph3["Data Export"]
+        E1["Create Output Directory"]
+        E2["Save Yearly Data Files"]
+  end
+    A["Read Raw Data Files"] --> B["clean_and_filter_products"]
+    B --> C["clean_and_standardize_columns"] & B1
+    C --> D["aggregate_account_deal_summary"] & C1
+    D --> E["export_processed_data"] & D1
+    B1 --> B2
+    B2 --> B3
+    B3 --> B4
+    C1 --> C2
+    C2 --> C3
+    C3 --> C4
+    D1 --> D2
+    D2 --> D3
+    D3 --> D4
+    E --> E1
+    E1 --> E2

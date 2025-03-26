@@ -1,8 +1,8 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 import os
-# Read the  data from Raw_data folder and filter data  based on OPP  list
-def filter_products_pipeline(input_csv):
+
+def clean_and_filter_products(input_csv):
     """
     Pipeline function to filter products based on opportunity list
     
@@ -56,14 +56,14 @@ def filter_products_pipeline(input_csv):
     plt.show()
 
     return df_filtered
-df_2020=filter_products_pipeline(input_csv='2020.csv')
-df_2021=filter_products_pipeline(input_csv='2021.csv')
-df_2022=filter_products_pipeline(input_csv='2022.csv')
-df_2023=filter_products_pipeline(input_csv='2023.csv')
-df_2024=filter_products_pipeline(input_csv='2024.csv')
 
-# column selection 
-def select_columns(df):
+df_2020=clean_and_filter_products(input_csv='2020.csv')
+df_2021=clean_and_filter_products(input_csv='2021.csv')
+df_2022=clean_and_filter_products(input_csv='2022.csv')
+df_2023=clean_and_filter_products(input_csv='2023.csv')
+df_2024=clean_and_filter_products(input_csv='2024.csv')
+
+def clean_and_standardize_columns(df):
     # List of columns to keep
     columns_to_keep = ['AccountNumber', 'DealNumber', 'Total', 'Amount Off', 
                       'Net Accrued', 'Age in Days', 'Setup', 'Product']
@@ -75,15 +75,64 @@ def select_columns(df):
     print(f"\nColumns before selection: {df.shape[1]}")
     print(f"Columns after selection: {df_selected.shape[1]}")
     
+    # Check for null values before filling
+    null_counts = df_selected.isnull().sum()
+    if null_counts.any():
+        print("\nNull values found in columns:")
+        print(null_counts[null_counts > 0])
+        
+        # Fill numeric columns with mean
+        numeric_cols = df_selected.select_dtypes(include=['int64', 'float64']).columns
+        for col in numeric_cols:
+            if df_selected[col].isnull().any():
+                mean_val = df_selected[col].mean()
+                null_count = df_selected[col].isnull().sum()
+                df_selected[col].fillna(mean_val, inplace=True)
+                print(f"\nFilled {null_count} null values in {col} with mean: {mean_val:.2f}")
+                
+        # Fill non-numeric columns with mode
+        non_numeric_cols = df_selected.select_dtypes(exclude=['int64', 'float64']).columns
+        for col in non_numeric_cols:
+            if df_selected[col].isnull().any():
+                mode_val = df_selected[col].mode()[0]
+                null_count = df_selected[col].isnull().sum()
+                df_selected[col].fillna(mode_val, inplace=True)
+                print(f"\nFilled {null_count} null values in {col} with mode: {mode_val}")
+                
+        # Verify no null values remain
+        remaining_nulls = df_selected.isnull().sum()
+        if remaining_nulls.any():
+            print("\nWarning: Some null values could not be filled:")
+            print(remaining_nulls[remaining_nulls > 0])
+        else:
+            print("\nAll null values have been successfully filled")
+    else:
+        print("\nNo null values found in the selected columns")
+    
+    # Convert Setup column by removing '$' and converting to float
+    df_selected['Setup'] = df_selected['Setup'].str.replace('$', '').astype(float)
+    
+    # Convert other numeric columns to float (except Product which stays as string)
+    numeric_cols = ['AccountNumber', 'DealNumber', 'Total', 'Amount Off', 
+                   'Net Accrued', 'Age in Days', 'Setup']
+    
+    for col in numeric_cols:
+        # Replace '-' with 0 before converting to float
+        df_selected[col] = df_selected[col].replace('-', '0').astype(float)
+        
+    # Print dtypes after conversion
+    print("\nColumn datatypes after conversion:")
+    print(df_selected.dtypes)
     return df_selected
+
 # Apply column selection to each dataframe
-df_2020 = select_columns(df_2020)
-df_2021 = select_columns(df_2021) 
-df_2022 = select_columns(df_2022)
-df_2023 = select_columns(df_2023)
-df_2024 = select_columns(df_2024)
-# Function to get account and deal level summaries
-def get_detailed_summary(df):
+df_2020 = clean_and_standardize_columns(df_2020)
+df_2021 = clean_and_standardize_columns(df_2021) 
+df_2022 = clean_and_standardize_columns(df_2022)
+df_2023 = clean_and_standardize_columns(df_2023)
+df_2024 = clean_and_standardize_columns(df_2024)
+
+def aggregate_account_deal_summary(df):
     # First get account level summary showing deals
     account_summary = df.groupby(['AccountNumber', 'DealNumber']).agg({
         'Total': 'sum',
@@ -111,28 +160,27 @@ def get_detailed_summary(df):
     return account_summary
 
 # Process each year's data
-detailed_2020 = get_detailed_summary(df_2020)
-detailed_2021 = get_detailed_summary(df_2021)
-detailed_2022 = get_detailed_summary(df_2022)
-detailed_2023 = get_detailed_summary(df_2023)
-detailed_2024 = get_detailed_summary(df_2024)
+detailed_2020 = aggregate_account_deal_summary(df_2020)
+detailed_2021 = aggregate_account_deal_summary(df_2021)
+detailed_2022 = aggregate_account_deal_summary(df_2022)
+detailed_2023 = aggregate_account_deal_summary(df_2023)
+detailed_2024 = aggregate_account_deal_summary(df_2024)
 
-# Function to ensure data directory exists and save detailed summaries
-def save_detailed_summaries(detailed_dfs, years):
+def export_processed_data(detailed_dfs, years):
     # Create processed directory if it doesn't exist
     processed_dir = '../Data/processed'
     os.makedirs(processed_dir, exist_ok=True)
     
     # Save each year's detailed summary
     for df, year in zip(detailed_dfs, years):
-        output_path = f'{processed_dir}/detailed_{year}.csv'
+        output_path = f'{processed_dir}/processed_{year}.csv'
         df.to_csv(output_path, index=False)
-        print(f"Saved detailed_{year}.csv to {processed_dir}/")
+        print(f"Saved processed_{year}.csv to {processed_dir}/")
 
 # Save all detailed summaries
 detailed_dfs = [detailed_2020, detailed_2021, detailed_2022, detailed_2023, detailed_2024]
 years = ['2020', '2021', '2022', '2023', '2024']
-save_detailed_summaries(detailed_dfs, years)
+export_processed_data(detailed_dfs, years)
 
 
 
