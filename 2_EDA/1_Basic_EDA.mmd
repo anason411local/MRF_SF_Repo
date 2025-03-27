@@ -1,0 +1,93 @@
+---
+config:
+  layout: dagre
+---
+flowchart TD
+ subgraph DataLoading["Data Loading Process"]
+        df2020["Load processed_2020.csv"]
+        loadData["Load CSV Data"]
+        df2021["Load processed_2021.csv"]
+        df2022["Load processed_2022.csv"]
+        df2023["Load processed_2023.csv"]
+        df2024["Load processed_2024.csv"]
+  end
+ subgraph AnalyzeAllData["analyze_all_data() Function"]
+        dealsDist["Calculate Deals Distribution"]
+        analyzeData["Analyze Each Year Dataset"]
+        plotDist["Plot Distribution"]
+        accountStats["Calculate Account Statistics"]
+        loopDeals{"For each deals count 1-9"}
+        filterDeals["Filter accounts with N deals"]
+        calcAvg["Calculate averages per account"]
+        combineStats["Combine all statistics"]
+        calcOverallAvg["Calculate overall average"]
+        printStats["Print statistics"]
+        saveStats["Save account statistics CSV"]
+  end
+ subgraph YearlyAnalysis["analyze_yearly_trends() Function"]
+        setupColors["Set up color scheme"]
+        yearlyTrends["Analyze Yearly Trends"]
+        loadYearlyStats["Load statistics for each year"]
+        calcTotals["Calculate yearly totals"]
+        visualizeTotals["Visualize yearly totals"]
+        calcYoY["Calculate year-over-year changes"]
+        calcAvgs["Calculate yearly averages"]
+        visualizeAvgs["Visualize yearly averages"]
+        calcMonthly["Calculate monthly averages"]
+        visualizeMonthly["Visualize monthly averages"]
+        custAnalysis["Customer count analysis"]
+        visualizeCust["Visualize customer counts"]
+  end
+    start(["Start"]) --> loadData
+    loadData --> df2020 & df2021 & df2022 & df2023 & df2024
+    analyzeData --> dealsDist
+    dealsDist --> plotDist
+    plotDist --> accountStats
+    accountStats --> loopDeals
+    loopDeals -- For each count --> filterDeals
+    filterDeals --> calcAvg
+    calcAvg --> loopDeals
+    loopDeals -- After loop --> combineStats
+    combineStats --> calcOverallAvg
+    calcOverallAvg --> printStats
+    printStats --> saveStats
+    DataLoading --> AnalyzeAllData
+    yearlyTrends --> setupColors
+    setupColors --> loadYearlyStats
+    loadYearlyStats --> calcTotals
+    calcTotals --> visualizeTotals
+    visualizeTotals --> calcYoY
+    calcYoY --> calcAvgs
+    calcAvgs --> visualizeAvgs
+    visualizeAvgs --> calcMonthly
+    calcMonthly --> visualizeMonthly
+    visualizeMonthly --> custAnalysis
+    custAnalysis --> visualizeCust
+    executeYearlyFunctions["Execute analyze_all_data for each year"] --> YearlyAnalysis
+    AnalyzeAllData --> executeYearlyFunctions
+    YearlyAnalysis --> finish(["End"])
+     df2020:::dataLoad
+     loadData:::dataLoad
+     df2021:::dataLoad
+     df2022:::dataLoad
+     df2023:::dataLoad
+     df2024:::dataLoad
+     dealsDist:::calculation
+     analyzeData:::process
+     plotDist:::visualization
+     accountStats:::calculation
+     calcAvg:::calculation
+     calcOverallAvg:::calculation
+     yearlyTrends:::process
+     calcTotals:::calculation
+     visualizeTotals:::visualization
+     calcYoY:::calculation
+     calcAvgs:::calculation
+     visualizeAvgs:::visualization
+     calcMonthly:::calculation
+     visualizeMonthly:::visualization
+     visualizeCust:::visualization
+    classDef process fill:#f9f,stroke:#333,stroke-width:2px
+    classDef dataLoad fill:#bbf,stroke:#333,stroke-width:1px
+    classDef visualization fill:#bfb,stroke:#333,stroke-width:1px
+    classDef calculation fill:#fbf,stroke:#333,stroke-width:1px
